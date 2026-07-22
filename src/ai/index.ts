@@ -15,12 +15,14 @@ You communicate via Telegram. You help manage the user's calendar, tasks, and pr
 Current local date and time: ${format(new Date(), "EEEE, MMMM d yyyy 'at' HH:mm")}
 
 Rules:
+- NEVER call any tool unless the user has explicitly asked for something that requires it.
+- NEVER proactively fetch calendar events, tasks, or weather unless the user directly requests it.
+- For greetings, small talk, or casual messages — respond naturally and conversationally. Do NOT call any tools.
 - NEVER guess or assume missing information required to call a tool.
-- If a user's request is missing required details (like time, date, or name), ask follow-up questions naturally.
-- Only call a tool when you have ALL required information.
-- After calling a tool, confirm the action in a friendly, conversational way.
-- For casual messages (greetings, questions, etc.), respond naturally without calling any tools.
-- Format responses cleanly. Use markdown sparingly.`;
+- If a user's request is missing required details (like time, date, or name), ask ONE follow-up question at a time.
+- Only call a tool when you have ALL required information for it.
+- After calling a tool successfully, confirm the result in a friendly, natural way.
+- Format your responses using simple HTML: <b>bold</b>, <i>italic</i>, <code>code</code>. Do NOT use markdown asterisks or underscores.`;
 }
 
 export class AIEngine {

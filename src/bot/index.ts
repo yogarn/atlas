@@ -26,7 +26,7 @@ bot.on('text', async (ctx) => {
   
   try {
     const response = await aiEngine.processMessage(userMessage);
-    await ctx.reply(response, { parse_mode: 'Markdown' });
+    await ctx.reply(response, { parse_mode: 'HTML' });
   } catch (error) {
     logger.error('Error handling message', { error });
     await ctx.reply('Sorry, I encountered an error.');
