@@ -16,6 +16,7 @@ const envSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string(),
   GOOGLE_REFRESH_TOKEN: z.string().optional(),
   PUBLIC_URL: z.string().url().describe('The public URL for the webhook (e.g. https://your-domain.com)'),
+  TIMEZONE: z.string().default('UTC').describe('IANA timezone name, e.g. Asia/Jakarta'),
 });
 
 const _env = envSchema.safeParse(process.env);
