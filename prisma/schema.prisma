@@ -1,0 +1,25 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String   @default("default") // For single user, could just be "default"
+  role           String   // "user", "assistant", "system"
+  content        String
+  timestamp      DateTime @default(now())
+
+  @@index([conversationId, timestamp(sort: Asc)])
+}
+
+model Memory {
+  id        String   @id @default(cuid())
+  type      String   // "summary", "preference", "ongoing_plan"
+  content   String
+  createdAt DateTime @default(now())
+}
