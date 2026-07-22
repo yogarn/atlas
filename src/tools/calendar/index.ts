@@ -3,6 +3,7 @@ import { oauth2Client } from '../../services/googleAuth.js';
 import { Tool } from '../types.js';
 import { env } from '../../config/env.js';
 import { addHours } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -26,8 +27,9 @@ function inferDuration(title: string): number {
 }
 
 async function getConflictingEvents(date: string, startTime: string, endTime: string): Promise<any[]> {
-  const startISO = new Date(toLocalDateTimeString(date, startTime)).toISOString();
-  const endISO   = new Date(toLocalDateTimeString(date, endTime)).toISOString();
+  // Convert local time → UTC so the Google API query hits the correct slot
+  const startISO = fromZonedTime(toLocalDateTimeString(date, startTime), env.TIMEZONE).toISOString();
+  const endISO   = fromZonedTime(toLocalDateTimeString(date, endTime),   env.TIMEZONE).toISOString();
 
   const res = await calendar.events.list({
     calendarId: 'primary',
@@ -126,8 +128,9 @@ export const calendarListTool: Tool = {
   },
   execute: async (args: any) => {
     const { date } = args;
-    const timeMin = new Date(`${date}T00:00:00`).toISOString();
-    const timeMax = new Date(`${date}T23:59:59`).toISOString();
+    // Convert midnight-to-midnight in user's timezone → UTC for correct API range
+    const timeMin = fromZonedTime(`${date}T00:00:00`, env.TIMEZONE).toISOString();
+    const timeMax = fromZonedTime(`${date}T23:59:59`, env.TIMEZONE).toISOString();
 
     const res = await calendar.events.list({
       calendarId: 'primary',
