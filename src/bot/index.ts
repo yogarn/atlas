@@ -1,5 +1,5 @@
 import { Telegraf, Context } from 'telegraf';
-import type { Update } from 'telegraf/typings/core/types/typegram.js';
+import type { Update } from '@telegraf/types';
 import { env } from '../config/env.js';
 import { aiEngine } from '../ai/index.js';
 import { logger } from '../utils/logger.js';

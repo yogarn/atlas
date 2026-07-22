@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { env } from '../config/env.js';
 import { bot } from '../bot/index.js';
 import { oauth2Client } from '../services/googleAuth.js';
@@ -17,7 +17,7 @@ bot.telegram.setWebhook(`${env.PUBLIC_URL}${webhookPath}`)
   .catch((e: Error) => logger.error('Failed to set webhook', { error: { message: e.message } }));
 
 // Google OAuth Auth Endpoint
-app.get('/auth', (_req: Request, res: Response) => {
+app.get('/auth', (_req: express.Request, res: express.Response) => {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: [
@@ -30,7 +30,7 @@ app.get('/auth', (_req: Request, res: Response) => {
 });
 
 // Google OAuth Callback
-app.get('/auth/callback', async (req: Request, res: Response) => {
+app.get('/auth/callback', async (req: express.Request, res: express.Response) => {
   const { code } = req.query;
   try {
     const { tokens } = await oauth2Client.getToken(code as string);
@@ -52,6 +52,6 @@ app.get('/auth/callback', async (req: Request, res: Response) => {
 });
 
 // Health check
-app.get('/health', (_req: Request, res: Response) => {
+app.get('/health', (_req: express.Request, res: express.Response) => {
   res.status(200).send('OK');
 });
