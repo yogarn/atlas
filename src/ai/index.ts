@@ -70,7 +70,7 @@ export class AIEngine {
           // We should ideally send the tool result back to Gemini to get a final response,
           // but for simplicity in this flow we will invoke it again.
           const toolResultContent = {
-            role: 'function',
+            role: 'user',
             parts: [{ functionResponse: { name: functionName, response: toolResult } }]
           };
 
