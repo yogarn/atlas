@@ -52,7 +52,8 @@ export class AIEngine {
       parts: [{ text: msg.content }],
     }));
 
-    const geminiTools = [{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geminiTools: any[] = [{
       functionDeclarations: toolRegistry.getAllDefinitions().map(def => ({
         name: def.name,
         description: def.description,
