@@ -1,7 +1,18 @@
 import { PrismaClient } from '@prisma/client';
+import { env } from '../config/env.js';
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 import { logger } from '../utils/logger.js';
 
-export const prisma = new PrismaClient();
+const pool = new pg.Pool({
+  connectionString: env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
+export const prisma = new PrismaClient({
+  adapter,
+});
 
 export class MemoryManager {
   async saveMessage(role: string, content: string) {

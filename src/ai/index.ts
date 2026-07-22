@@ -6,9 +6,9 @@ import { logger } from '../utils/logger.js';
 import { format } from 'date-fns';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const modelName = 'gemini-2.5-flash';
+const modelName = 'gemini-3.5-flash-lite';
 
-const systemInstruction = `You are a helpful, professional, and intelligent personal AI assistant. 
+const systemInstruction = `You are a helpful, professional, and intelligent personal AI assistant.
 You communicate via Telegram. You help manage the user's calendar, tasks, and provide briefings.
 You must NOT guess information required by tools. Instead, ask follow-up questions to gather the missing information.
 Always maintain context and remember what was discussed earlier in the conversation.
@@ -29,10 +29,10 @@ export class AIEngine {
       parts: [{ text: msg.content }]
     }));
 
-    // Add current message (history already includes it since we just saved it, 
+    // Add current message (history already includes it since we just saved it,
     // but wait, we need to ensure the order is correct. `getRecentMessages` returns chronological)
     // Actually, `getRecentMessages` includes the message we just saved.
-    
+
     // Tools schema for Gemini
     const geminiTools = [{
       functionDeclarations: toolRegistry.getAllDefinitions().map(def => ({
@@ -59,7 +59,7 @@ export class AIEngine {
         for (const call of response.functionCalls) {
           const functionName = call.name;
           const args = call.args;
-          
+
           let toolResult;
           try {
             toolResult = await toolRegistry.execute(functionName, args);
@@ -73,7 +73,7 @@ export class AIEngine {
             role: 'function',
             parts: [{ functionResponse: { name: functionName, response: toolResult } }]
           };
-          
+
           const secondResponse = await ai.models.generateContent({
             model: modelName,
             contents: [...contents, response.candidates?.[0]?.content as any, toolResultContent],
