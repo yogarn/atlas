@@ -4,7 +4,7 @@ import { bot } from '../bot/index.js';
 import { oauth2Client } from '../services/googleAuth.js';
 import { logger } from '../utils/logger.js';
 
-export const app = express();
+export const app: express.Application = express();
 
 app.use(express.json());
 

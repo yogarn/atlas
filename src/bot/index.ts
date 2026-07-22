@@ -1,11 +1,13 @@
-import { Telegraf, Context } from 'telegraf';
-import type { Update } from '@telegraf/types';
+import { Telegraf } from 'telegraf';
 import { env } from '../config/env.js';
 import { aiEngine } from '../ai/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeForTelegram } from '../utils/sanitize.js';
 
-export const bot: Telegraf<Context<Update>> = new Telegraf(env.TELEGRAM_BOT_TOKEN);
+// Cast to Telegraf<any> to avoid @telegraf/types version conflict in pnpm
+// (telegraf uses v7.1.0 internally, but pnpm also resolves v9.2.1 as a direct dep)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const bot = new Telegraf(env.TELEGRAM_BOT_TOKEN) as Telegraf<any>;
 
 // Middleware to restrict access to owner only
 bot.use(async (ctx, next) => {
