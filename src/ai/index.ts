@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 import { format } from 'date-fns';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const modelName = 'gemini-2.5-flash-lite-preview-06-17';
+const modelName = 'gemini-3.5-flash-lite';
 
 function buildSystemInstruction(): string {
   return `You are Atlas, a helpful, warm, and intelligent personal AI assistant.
@@ -64,16 +64,7 @@ export class AIEngine {
 
         const response = await chat.sendMessage({ message: currentMessage });
 
-<<<<<<< HEAD
         const functionCalls = response.functionCalls;
-=======
-          // We should ideally send the tool result back to Gemini to get a final response,
-          // but for simplicity in this flow we will invoke it again.
-          const toolResultContent = {
-            role: 'user',
-            parts: [{ functionResponse: { name: functionName, response: toolResult } }]
-          };
->>>>>>> ad25eaab05dc750c9b267a255439366ccec0d78f
 
         if (!functionCalls || functionCalls.length === 0) {
           // No tool calls — this is the final text response
