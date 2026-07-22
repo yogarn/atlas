@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Content, Part } from '@google/genai';
 import { env } from '../config/env.js';
 import { toolRegistry } from '../tools/index.js';
 import { memoryManager } from '../memory/index.js';
@@ -6,34 +6,36 @@ import { logger } from '../utils/logger.js';
 import { format } from 'date-fns';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const modelName = 'gemini-3.5-flash-lite';
+const modelName = 'gemini-2.5-flash-lite-preview-06-17';
 
-const systemInstruction = `You are a helpful, professional, and intelligent personal AI assistant.
-You communicate via Telegram. You help manage the user's calendar, tasks, and provide briefings.
-You must NOT guess information required by tools. Instead, ask follow-up questions to gather the missing information.
-Always maintain context and remember what was discussed earlier in the conversation.
-Format your responses beautifully in markdown. Keep it concise but natural.
+function buildSystemInstruction(): string {
+  return `You are Atlas, a helpful, warm, and intelligent personal AI assistant.
+You communicate via Telegram. You help manage the user's calendar, tasks, and provide daily briefings.
 
-Current local date and time: ${format(new Date(), "yyyy-MM-dd'T'HH:mm:ssXXX")}
-`;
+Current local date and time: ${format(new Date(), "EEEE, MMMM d yyyy 'at' HH:mm")}
+
+Rules:
+- NEVER guess or assume missing information required to call a tool.
+- If a user's request is missing required details (like time, date, or name), ask follow-up questions naturally.
+- Only call a tool when you have ALL required information.
+- After calling a tool, confirm the action in a friendly, conversational way.
+- For casual messages (greetings, questions, etc.), respond naturally without calling any tools.
+- Format responses cleanly. Use markdown sparingly.`;
+}
 
 export class AIEngine {
-  async processMessage(userMessage: string) {
-    // Save user message
+  async processMessage(userMessage: string): Promise<string> {
     await memoryManager.saveMessage('user', userMessage);
 
-    // Fetch history
-    const history = await memoryManager.getRecentMessages(15);
-    const contents = history.map(msg => ({
+    const recentMessages = await memoryManager.getRecentMessages(20);
+
+    // Build chat history (everything except the last message, which we send fresh)
+    const historyMessages = recentMessages.slice(0, -1);
+    const history: Content[] = historyMessages.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
+      parts: [{ text: msg.content }],
     }));
 
-    // Add current message (history already includes it since we just saved it,
-    // but wait, we need to ensure the order is correct. `getRecentMessages` returns chronological)
-    // Actually, `getRecentMessages` includes the message we just saved.
-
-    // Tools schema for Gemini
     const geminiTools = [{
       functionDeclarations: toolRegistry.getAllDefinitions().map(def => ({
         name: def.name,
@@ -43,60 +45,72 @@ export class AIEngine {
     }];
 
     try {
-      const response = await ai.models.generateContent({
+      const chat = ai.chats.create({
         model: modelName,
-        contents,
+        history,
         config: {
-          systemInstruction,
+          systemInstruction: buildSystemInstruction(),
           tools: geminiTools,
         }
       });
 
+      // Agentic loop — keep running until Gemini gives a final text response
       let finalResponse = '';
+      let currentMessage: string | Part[] = userMessage;
+      const MAX_ITERATIONS = 5;
 
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        // Handle function calls
-        for (const call of response.functionCalls) {
-          const functionName = call.name;
-          const args = call.args;
+      for (let i = 0; i < MAX_ITERATIONS; i++) {
+        logger.info('Sending message to Gemini', { iteration: i, message: typeof currentMessage === 'string' ? currentMessage : '[function results]' });
 
-          let toolResult;
-          try {
-            toolResult = await toolRegistry.execute(functionName, args);
-          } catch (e: any) {
-            toolResult = { error: e.message };
-          }
+        const response = await chat.sendMessage({ message: currentMessage });
 
-          // We should ideally send the tool result back to Gemini to get a final response,
-          // but for simplicity in this flow we will invoke it again.
-          const toolResultContent = {
-            role: 'function',
-            parts: [{ functionResponse: { name: functionName, response: toolResult } }]
-          };
+        const functionCalls = response.functionCalls;
 
-          const secondResponse = await ai.models.generateContent({
-            model: modelName,
-            contents: [...contents, response.candidates?.[0]?.content as any, toolResultContent],
-            config: {
-              systemInstruction,
-              tools: geminiTools, // allow further tool calls if needed
-            }
-          });
-
-          if (secondResponse.text) {
-             finalResponse += secondResponse.text;
-          }
+        if (!functionCalls || functionCalls.length === 0) {
+          // No tool calls — this is the final text response
+          finalResponse = response.text ?? 'I have nothing to say.';
+          break;
         }
-      } else {
-        finalResponse = response.text || 'I have nothing to say.';
+
+        // Execute all requested tool calls in parallel
+        logger.info(`Gemini requested ${functionCalls.length} tool call(s)`);
+
+        const functionResponseParts: Part[] = await Promise.all(
+          functionCalls.map(async (call) => {
+            let result: any;
+            try {
+              result = await toolRegistry.execute(call.name!, call.args ?? {});
+            } catch (e: any) {
+              logger.error(`Tool ${call.name} failed`, { error: e.message });
+              result = { error: e.message };
+            }
+
+            // Wrap result in object — Gemini requires response to be a plain object, never an array
+            const wrappedResult = Array.isArray(result) ? { items: result } : result;
+
+            return {
+              functionResponse: {
+                name: call.name!,
+                response: wrappedResult,
+              },
+            } as Part;
+          })
+        );
+
+        // Feed the function results back to Gemini as the next message
+        currentMessage = functionResponseParts;
+      }
+
+      if (!finalResponse) {
+        finalResponse = 'Done.';
       }
 
       await memoryManager.saveMessage('assistant', finalResponse);
       return finalResponse;
 
     } catch (error: any) {
-      logger.error('Gemini API Error', { error: error.message });
-      return 'Sorry, I encountered an error while processing your request.';
+      logger.error('Gemini API Error', { error: error.message ?? JSON.stringify(error) });
+      return 'Sorry, I ran into an issue. Please try again.';
     }
   }
 }
