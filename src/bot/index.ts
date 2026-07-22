@@ -2,6 +2,7 @@ import { Telegraf } from 'telegraf';
 import { env } from '../config/env.js';
 import { aiEngine } from '../ai/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeForTelegram } from '../utils/sanitize.js';
 
 export const bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
 
@@ -26,7 +27,7 @@ bot.on('text', async (ctx) => {
   
   try {
     const response = await aiEngine.processMessage(userMessage);
-    await ctx.reply(response, { parse_mode: 'HTML' });
+    await ctx.reply(sanitizeForTelegram(response), { parse_mode: 'HTML' });
   } catch (error) {
     logger.error('Error handling message', { error });
     await ctx.reply('Sorry, I encountered an error.');
