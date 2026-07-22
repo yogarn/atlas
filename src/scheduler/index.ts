@@ -11,7 +11,7 @@ export function startScheduler() {
     logger.info('Running Morning Briefing job...');
     try {
       const prompt = `[SYSTEM SCHEDULER] Generate a morning briefing for today. 
-Call the calendar_list tool for today's date and the weather_today tool, then synthesize them into a warm, concise morning briefing. 
+Call the calendar_list tool for today's date and the weather_today tool for Malang, then synthesize them into a warm, concise morning briefing. 
 Do not ask follow-up questions — just generate the briefing directly.`;
 
       const response = await aiEngine.processMessage(prompt);
