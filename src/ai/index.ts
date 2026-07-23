@@ -39,7 +39,15 @@ Calendar Rules:
   - Do NOT create a duplicate event.
 - When the user wants to CANCEL or DELETE an event: use calendar_delete.
   - First call calendar_list to find the event ID.
-  - If multiple events match the user's description, list them and ask which one to delete.`;
+  - If multiple events match the user's description, list them and ask which one to delete.
+
+Tasks Rules:
+- When the user wants to MODIFY a task (mark complete, rename, change due date, etc): ALWAYS use tasks_update.
+  - First call tasks_list to get the task's ID, then call tasks_update with that ID and only the changed fields.
+  - To mark a task as completed, use status="completed".
+- When the user wants to DELETE a task: use tasks_delete.
+  - First call tasks_list to find the task ID.
+  - If multiple tasks match the user's description, list them and ask which one to delete.`;
 }
 
 export class AIEngine {

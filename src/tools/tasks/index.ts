@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { oauth2Client } from '../../services/googleAuth.js';
-import { Tool, ToolDefinition } from '../types.js';
+import { Tool } from '../types.js';
 
 const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
 
@@ -63,6 +63,69 @@ export const tasksListTool: Tool = {
       id: t.id,
       title: t.title,
       due: t.due,
+      notes: t.notes,
     }));
+  }
+};
+
+export const tasksUpdateTool: Tool = {
+  definition: {
+    name: 'tasks_update',
+    description: 'Update an existing task by its ID. You must first call tasks_list to get the task ID. Only provide fields you want to change.',
+    parameters: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The Google Task ID (from tasks_list)' },
+        title: { type: 'string', description: 'New title (optional)' },
+        notes: { type: 'string', description: 'New notes (optional)' },
+        dueDate: { type: 'string', description: 'New due date in YYYY-MM-DD format (optional)' },
+        status: { type: 'string', description: 'Status of task, "needsAction" or "completed" (optional)' }
+      },
+      required: ['taskId']
+    }
+  },
+  execute: async (args: any) => {
+    const { taskId, title, notes, dueDate, status } = args;
+
+    const existing = await tasks.tasks.get({ tasklist: '@default', task: taskId });
+    const task = existing.data;
+
+    const requestBody: any = {
+      ...task,
+      title: title ?? task.title,
+      notes: notes ?? task.notes,
+      status: status ?? task.status,
+    };
+
+    if (dueDate) {
+      requestBody.due = new Date(`${dueDate}T00:00:00Z`).toISOString();
+    }
+
+    const res = await tasks.tasks.update({
+      tasklist: '@default',
+      task: taskId,
+      requestBody,
+    });
+
+    return { status: 'success', taskId: res.data.id, title: res.data.title, taskStatus: res.data.status };
+  }
+};
+
+export const tasksDeleteTool: Tool = {
+  definition: {
+    name: 'tasks_delete',
+    description: 'Delete a task by its ID. You must first call tasks_list to get the task ID.',
+    parameters: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The Google Task ID (from tasks_list)' }
+      },
+      required: ['taskId']
+    }
+  },
+  execute: async (args: any) => {
+    const { taskId } = args;
+    await tasks.tasks.delete({ tasklist: '@default', task: taskId });
+    return { status: 'success' };
   }
 };
