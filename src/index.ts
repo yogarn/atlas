@@ -17,7 +17,7 @@ async function bootstrap() {
   }
 
   // Start the schedulers
-  startScheduler();
+  await startScheduler();
 }
 
 bootstrap().catch((error) => {
