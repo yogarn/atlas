@@ -10,9 +10,9 @@ export function startScheduler() {
   cron.schedule('0 7 * * *', async () => {
     logger.info('Running Morning Briefing job...');
     try {
-      const prompt = `[SYSTEM SCHEDULER] Generate a morning briefing for today. 
-Call the calendar_list tool for today's date, the tasks_list tool for pending tasks, and the weather_today tool for Malang. 
-Synthesize them into a warm, concise morning briefing. 
+      const prompt = `[SYSTEM SCHEDULER] Generate a morning briefing for today.
+Call the calendar_list tool for today's date, the tasks_list tool for pending tasks, and the weather_today tool for Malang.
+Synthesize them into a warm, concise morning briefing.
 Do not ask follow-up questions — just generate the briefing directly.`;
 
       const response = await aiEngine.processMessage(prompt);
