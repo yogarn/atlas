@@ -11,7 +11,7 @@ export function startScheduler() {
     logger.info('Running Morning Briefing job...');
     try {
       const prompt = `[SYSTEM SCHEDULER] Generate a morning briefing for today.
-Call the calendar_list tool for today's date, the tasks_list tool for pending tasks, and the weather_today tool for Malang.
+Call the calendar_list tool for today's date, the tasks_list tool for pending tasks, and the weather_forecast tool for Malang today.
 Synthesize them into a warm, concise morning briefing.
 Do not ask follow-up questions — just generate the briefing directly.`;
 
@@ -35,7 +35,8 @@ Do not ask follow-up questions — just generate the briefing directly.`;
     logger.info('Running Night Reminder job...');
     try {
       const prompt = `[SYSTEM SCHEDULER] Generate a night reminder for tomorrow's agenda.
-Call the calendar_list tool for TOMORROW'S date, and summarize the schedule.
+Call the calendar_list tool for TOMORROW'S date, the tasks_list tool for pending tasks, and the weather_forecast tool for Malang tomorrow.
+Synthesize them into a concise night reminder.
 End the message exactly with:
 "Have a sweet dream, Nala.
 Per aspera ad astra. Godspeed."
