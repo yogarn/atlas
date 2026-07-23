@@ -209,16 +209,18 @@ export const calendarUpdateTool: Tool = {
 
     // Conflict check
     if (!force && (date || startTime || endTime)) {
-      const startHHmm = effectiveStart.substring(11, 16);
-      const endHHmm = effectiveEnd.substring(11, 16);
-      const conflicts = await getConflictingEvents(effectiveDate, startHHmm, endHHmm, eventId);
-      if (conflicts.length > 0) {
-        return {
-          status: 'conflict',
-          message: 'There are existing events that overlap with this updated time slot.',
-          conflictingEvents: conflicts,
-          proposedUpdate: { eventId, title, date: effectiveDate, startTime: startHHmm, endTime: endHHmm },
-        };
+      if (effectiveStart && effectiveEnd && effectiveDate) {
+        const startHHmm = effectiveStart.substring(11, 16);
+        const endHHmm = effectiveEnd.substring(11, 16);
+        const conflicts = await getConflictingEvents(effectiveDate, startHHmm, endHHmm, eventId);
+        if (conflicts.length > 0) {
+          return {
+            status: 'conflict',
+            message: 'There are existing events that overlap with this updated time slot.',
+            conflictingEvents: conflicts,
+            proposedUpdate: { eventId, title, date: effectiveDate, startTime: startHHmm, endTime: endHHmm },
+          };
+        }
       }
     }
 
