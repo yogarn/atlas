@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 import { format, toZonedTime } from 'date-fns-tz';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const modelName = 'gemini-3.5-flash-lite';
+const modelName = env.GEMINI_MODEL;
 
 function buildSystemInstruction(): string {
   const now = toZonedTime(new Date(), env.TIMEZONE);
