@@ -35,6 +35,7 @@ Calendar Rules:
 - When the user wants to MODIFY an event (reschedule, shorten, extend, rename): ALWAYS use calendar_update, NEVER calendar_create.
   - First call calendar_list to get the event's ID, then call calendar_update with that ID and only the changed fields.
   - Do NOT create a duplicate event.
+- When the user asks to take a break: Do NOT create a new "Break" event. Instead, find the current ongoing event via calendar_list and use calendar_update to push its endTime back to accommodate the break.
 - When the user wants to CANCEL or DELETE an event: use calendar_delete.
   - First call calendar_list to find the event ID.
   - If multiple events match the user's description, list them and ask which one to delete.

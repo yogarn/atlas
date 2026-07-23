@@ -38,8 +38,9 @@ Do not ask follow-up questions — just generate the briefing directly.`;
 Call the calendar_list tool for TOMORROW'S date, the tasks_list tool for pending tasks, and the weather_forecast tool for Malang tomorrow.
 Synthesize them into a concise night reminder.
 End the message exactly with:
-"Sweet dreams, Nala.
-Per aspera ad astra. Godspeed."
+"Have a good morning, Nala.
+Take things one step at a time.
+Godspeed."
 Do not ask follow-up questions — just generate the reminder directly.`;
 
       const response = await aiEngine.processMessage(prompt);

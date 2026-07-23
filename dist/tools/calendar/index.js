@@ -3,6 +3,7 @@ import { oauth2Client } from '../../services/googleAuth.js';
 import { env } from '../../config/env.js';
 import { addHours } from 'date-fns';
 import { fromZonedTime } from 'date-fns-tz';
+import { toTitleCase } from '../../utils/format.js';
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 function toLocalDateTimeString(date, time) {
     return `${date}T${time.length === 5 ? time + ':00' : time}`;
@@ -61,12 +62,13 @@ export const calendarCreateTool = {
                 location: { type: 'string', description: 'Location (optional)' },
                 description: { type: 'string', description: 'Notes (optional)' },
                 force: { type: 'boolean', description: 'Set to true to create the event even if conflicts exist. Only use after the user has confirmed.' },
+                attendees: { type: 'array', items: { type: 'string', description: 'email address' }, description: 'List of email addresses to invite as guests (optional)' },
             },
             required: ['title', 'date', 'startTime']
         }
     },
     execute: async (args) => {
-        const { title, date, startTime, endTime, durationHours, location, description, force } = args;
+        const { title, date, startTime, endTime, durationHours, location, description, force, attendees } = args;
         const computedEnd = endTime
             ? toLocalDateTimeString(date, endTime)
             : addHoursToTimeString(date, startTime, durationHours ?? inferDuration(title));
@@ -86,12 +88,14 @@ export const calendarCreateTool = {
         const start = toLocalDateTimeString(date, startTime);
         const res = await calendar.events.insert({
             calendarId: 'primary',
+            sendUpdates: 'all',
             requestBody: {
-                summary: title,
+                summary: toTitleCase(title),
                 location,
                 description,
                 start: { dateTime: start, timeZone: env.TIMEZONE },
                 end: { dateTime: computedEnd, timeZone: env.TIMEZONE },
+                attendees: attendees?.map((email) => ({ email })),
             },
         });
         return { status: 'success', eventId: res.data.id, link: res.data.htmlLink };
@@ -151,12 +155,13 @@ export const calendarUpdateTool = {
                 endTime: { type: 'string', description: 'New end time in HH:mm (optional)' },
                 location: { type: 'string', description: 'New location (optional)' },
                 description: { type: 'string', description: 'New description (optional)' },
+                attendees: { type: 'array', items: { type: 'string', description: 'email address' }, description: 'List of email addresses to invite as guests (optional)' },
             },
             required: ['eventId']
         }
     },
     execute: async (args) => {
-        const { eventId, title, date, startTime, endTime, location, description } = args;
+        const { eventId, title, date, startTime, endTime, location, description, attendees } = args;
         // Fetch the existing event first to preserve unchanged fields
         const existing = await calendar.events.get({ calendarId: 'primary', eventId });
         const ev = existing.data;
@@ -172,13 +177,15 @@ export const calendarUpdateTool = {
         const res = await calendar.events.update({
             calendarId: 'primary',
             eventId,
+            sendUpdates: 'all',
             requestBody: {
                 ...ev,
-                summary: title ?? ev.summary,
+                summary: title ? toTitleCase(title) : ev.summary,
                 location: location ?? ev.location,
                 description: description ?? ev.description,
                 start: { dateTime: effectiveStart, timeZone: env.TIMEZONE },
                 end: { dateTime: effectiveEnd, timeZone: env.TIMEZONE },
+                attendees: attendees ? attendees.map((email) => ({ email })) : ev.attendees,
             },
         });
         return { status: 'success', eventId: res.data.id, link: res.data.htmlLink };

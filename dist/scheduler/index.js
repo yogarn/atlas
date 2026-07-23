@@ -24,14 +24,14 @@ Do not ask follow-up questions — just generate the briefing directly.`;
         timezone: env.TIMEZONE, // Run in user's local timezone, not server UTC
     });
     // Night Reminder at 21:00 local time
-    cron.schedule('35 7 * * *', async () => {
+    cron.schedule('0 21 * * *', async () => {
         logger.info('Running Night Reminder job...');
         try {
             const prompt = `[SYSTEM SCHEDULER] Generate a night reminder for tomorrow's agenda.
 Call the calendar_list tool for TOMORROW'S date, the tasks_list tool for pending tasks, and the weather_forecast tool for Malang tomorrow.
 Synthesize them into a concise night reminder.
 End the message exactly with:
-"Have a sweet dream, Nala.
+"Sweet dreams, Nala.
 Per aspera ad astra. Godspeed."
 Do not ask follow-up questions — just generate the reminder directly.`;
             const response = await aiEngine.processMessage(prompt);
