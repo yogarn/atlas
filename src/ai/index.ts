@@ -37,6 +37,10 @@ Calendar Rules:
 - When the user wants to MODIFY an event (reschedule, shorten, extend, rename): ALWAYS use calendar_update, NEVER calendar_create.
   - First call calendar_list to get the event's ID, then call calendar_update with that ID and only the changed fields.
   - Do NOT create a duplicate event.
+  - calendar_update also checks for conflicts when changing times. If it returns 'conflict', inform the user and ask for confirmation before calling it again with force=true.
+- When the user wants to SWAP two events:
+  - You MUST call calendar_update TWICE: once for the first event ID to change its startTime and endTime, and once for the second event ID to change its startTime and endTime.
+  - Do NEVER swap events just by changing their titles. You must move their actual time slots.
 - When the user asks to take a break: Do NOT create a new "Break" event. Instead, find the current ongoing event via calendar_list and use calendar_update to push its endTime back to accommodate the break.
 - When the user wants to CANCEL or DELETE an event: use calendar_delete.
   - First call calendar_list to find the event ID.
