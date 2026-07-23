@@ -5,9 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
     container_name: atlas
     restart: unless-stopped
     env_file: .env
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     ports:
       - "3003:3000"   # host:container — change the host port to match your Cloudflare tunnel
     healthcheck:
