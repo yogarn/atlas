@@ -70,7 +70,7 @@ export const calendarCreateTool: Tool = {
         location:    { type: 'string', description: 'Location (optional)' },
         description: { type: 'string', description: 'Notes (optional)' },
         force:       { type: 'boolean', description: 'Set to true to create the event even if conflicts exist. Only use after the user has confirmed.' },
-        attendees:   { type: 'array', items: { type: 'string' }, description: 'List of email addresses to invite as guests (optional)' },
+        attendees:   { type: 'array', items: { type: 'string', description: 'email address' }, description: 'List of email addresses to invite as guests (optional)' },
       },
       required: ['title', 'date', 'startTime']
     }
@@ -176,7 +176,7 @@ export const calendarUpdateTool: Tool = {
         endTime:     { type: 'string', description: 'New end time in HH:mm (optional)' },
         location:    { type: 'string', description: 'New location (optional)' },
         description: { type: 'string', description: 'New description (optional)' },
-        attendees:   { type: 'array', items: { type: 'string' }, description: 'List of email addresses to invite as guests (optional)' },
+        attendees:   { type: 'array', items: { type: 'string', description: 'email address' }, description: 'List of email addresses to invite as guests (optional)' },
       },
       required: ['eventId']
     }
