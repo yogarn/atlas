@@ -1,1 +1,1 @@
-export declare function startScheduler(): void;
+export declare function startScheduler(): Promise<void>;

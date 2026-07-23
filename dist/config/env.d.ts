@@ -4,6 +4,7 @@ export declare const env: {
     TELEGRAM_BOT_TOKEN: string;
     TELEGRAM_USER_ID: number;
     GEMINI_API_KEY: string;
+    GEMINI_MODEL: string;
     OPENWEATHERMAP_API_KEY: string;
     DATABASE_URL: string;
     GOOGLE_CLIENT_ID: string;

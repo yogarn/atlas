@@ -7,6 +7,7 @@ const envSchema = z.object({
     TELEGRAM_BOT_TOKEN: z.string(),
     TELEGRAM_USER_ID: z.string().transform((val) => parseInt(val, 10)),
     GEMINI_API_KEY: z.string(),
+    GEMINI_MODEL: z.string().default('gemini-3.5-flash-lite'),
     OPENWEATHERMAP_API_KEY: z.string(),
     DATABASE_URL: z.string(),
     GOOGLE_CLIENT_ID: z.string(),

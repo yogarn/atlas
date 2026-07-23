@@ -24,7 +24,7 @@ function inferDuration(title) {
         return 1;
     return 1;
 }
-async function getConflictingEvents(date, startTime, endTime) {
+async function getConflictingEvents(date, startTime, endTime, excludeEventId) {
     // Convert local time → UTC so the Google API query hits the correct slot
     const startISO = fromZonedTime(toLocalDateTimeString(date, startTime), env.TIMEZONE).toISOString();
     const endISO = fromZonedTime(toLocalDateTimeString(date, endTime), env.TIMEZONE).toISOString();
@@ -36,12 +36,16 @@ async function getConflictingEvents(date, startTime, endTime) {
         singleEvents: true,
         orderBy: 'startTime',
     });
-    return (res.data.items ?? []).map(e => ({
+    let items = (res.data.items ?? []).map(e => ({
         id: e.id,
         title: e.summary,
         start: e.start?.dateTime || e.start?.date,
         end: e.end?.dateTime || e.end?.date,
     }));
+    if (excludeEventId) {
+        items = items.filter(e => e.id !== excludeEventId);
+    }
+    return items;
 }
 // ─── calendar_create ─────────────────────────────────────────────────────────
 export const calendarCreateTool = {
@@ -156,12 +160,13 @@ export const calendarUpdateTool = {
                 location: { type: 'string', description: 'New location (optional)' },
                 description: { type: 'string', description: 'New description (optional)' },
                 attendees: { type: 'array', items: { type: 'string', description: 'email address' }, description: 'List of email addresses to invite as guests (optional)' },
+                force: { type: 'boolean', description: 'Set to true to update the event even if conflicts exist. Only use after the user has confirmed.' },
             },
             required: ['eventId']
         }
     },
     execute: async (args) => {
-        const { eventId, title, date, startTime, endTime, location, description, attendees } = args;
+        const { eventId, title, date, startTime, endTime, location, description, attendees, force } = args;
         // Fetch the existing event first to preserve unchanged fields
         const existing = await calendar.events.get({ calendarId: 'primary', eventId });
         const ev = existing.data;
@@ -174,6 +179,22 @@ export const calendarUpdateTool = {
         const effectiveEnd = endTime
             ? toLocalDateTimeString(effectiveDate, endTime)
             : ev.end?.dateTime ?? ev.end?.date;
+        // Conflict check
+        if (!force && (date || startTime || endTime)) {
+            if (effectiveStart && effectiveEnd && effectiveDate) {
+                const startHHmm = effectiveStart.substring(11, 16);
+                const endHHmm = effectiveEnd.substring(11, 16);
+                const conflicts = await getConflictingEvents(effectiveDate, startHHmm, endHHmm, eventId);
+                if (conflicts.length > 0) {
+                    return {
+                        status: 'conflict',
+                        message: 'There are existing events that overlap with this updated time slot.',
+                        conflictingEvents: conflicts,
+                        proposedUpdate: { eventId, title, date: effectiveDate, startTime: startHHmm, endTime: endHHmm },
+                    };
+                }
+            }
+        }
         const res = await calendar.events.update({
             calendarId: 'primary',
             eventId,

@@ -5,7 +5,7 @@ import { memoryManager } from '../memory/index.js';
 import { logger } from '../utils/logger.js';
 import { format, toZonedTime } from 'date-fns-tz';
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-const modelName = 'gemini-3.5-flash-lite';
+const modelName = env.GEMINI_MODEL;
 function buildSystemInstruction() {
     const now = toZonedTime(new Date(), env.TIMEZONE);
     const localTime = format(now, "EEEE, MMMM d yyyy 'at' HH:mm", { timeZone: env.TIMEZONE });
@@ -35,11 +35,20 @@ Calendar Rules:
 - When the user wants to MODIFY an event (reschedule, shorten, extend, rename): ALWAYS use calendar_update, NEVER calendar_create.
   - First call calendar_list to get the event's ID, then call calendar_update with that ID and only the changed fields.
   - Do NOT create a duplicate event.
+  - calendar_update also checks for conflicts when changing times. If it returns 'conflict', inform the user and ask for confirmation before calling it again with force=true.
+- When the user wants to SWAP two events:
+  - You MUST call calendar_update TWICE: once for the first event ID to change its startTime and endTime, and once for the second event ID to change its startTime and endTime.
+  - Do NEVER swap events just by changing their titles. You must move their actual time slots.
 - When the user asks to take a break: Do NOT create a new "Break" event. Instead, find the current ongoing event via calendar_list and use calendar_update to push its endTime back to accommodate the break.
 - When the user wants to CANCEL or DELETE an event: use calendar_delete.
   - First call calendar_list to find the event ID.
-  - If multiple events match the user's description, list them and ask which one to delete.
-
+  - If the user EXPLICITLY asked to delete an event, you may delete it immediately.
+  - If you are unsure or inferring the deletion, ALWAYS ask for explicit confirmation first.
+  - (Exception: you can automatically delete exact duplicates with the same title and overlapping time to clean up).
+- Planning & Brainstorming:
+  - When the user mentions their plans or to-do list for tomorrow (or future dates), DO NOT immediately schedule them into the calendar.
+  - First, respond by proposing a structured schedule. Ask the user if they are happy with the proposed plan.
+  - Only call calendar_create after they explicitly approve the proposed plan.
 Tasks Rules:
 - When the user wants to MODIFY a task (mark complete, rename, change due date, etc): ALWAYS use tasks_update.
   - First call tasks_list to get the task's ID, then call tasks_update with that ID and only the changed fields.

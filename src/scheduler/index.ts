@@ -8,6 +8,10 @@ import { boss } from './pgboss.js';
 export async function startScheduler() {
   await boss.start();
 
+  // Create queues to prevent "Queue does not exist" errors in newer pg-boss versions
+  await boss.createQueue('morning-briefing');
+  await boss.createQueue('night-reminder');
+
   // Define workers
   await boss.work('morning-briefing', async () => {
     logger.info('Running Morning Briefing job...');

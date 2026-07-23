@@ -14,7 +14,7 @@ async function bootstrap() {
         bot.launch();
     }
     // Start the schedulers
-    startScheduler();
+    await startScheduler();
 }
 bootstrap().catch((error) => {
     logger.error('Failed to bootstrap application', { error });
