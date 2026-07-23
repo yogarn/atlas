@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { oauth2Client } from '../../services/googleAuth.js';
 import { Tool } from '../types.js';
+import { toTitleCase } from '../../utils/format.js';
 
 const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
 
@@ -22,7 +23,7 @@ export const tasksCreateTool: Tool = {
     const { title, notes, dueDate } = args;
 
     const requestBody: any = {
-      title,
+      title: toTitleCase(title),
       notes,
     };
 
@@ -92,7 +93,7 @@ export const tasksUpdateTool: Tool = {
 
     const requestBody: any = {
       ...task,
-      title: title ?? task.title,
+      title: title ? toTitleCase(title) : task.title,
       notes: notes ?? task.notes,
       status: status ?? task.status,
     };
